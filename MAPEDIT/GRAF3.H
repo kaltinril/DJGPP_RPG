@@ -23,7 +23,7 @@
 
 unsigned char *screen;
 unsigned char *double_buffer=new unsigned char[64000];
-
+unsigned char *temp=new unsigned char[64000];
 #define SCREEN_WIDTH        320       /* width in pixels of mode 0x13 */
 #define SCREEN_HEIGHT       200       /* height in pixels of mode 0x13 */
 #define SCREEN_SIZE         SCREEN_WIDTH*SCREEN_HEIGHT

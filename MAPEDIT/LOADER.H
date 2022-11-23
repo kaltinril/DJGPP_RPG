@@ -12,3 +12,4 @@ BOOL open_map();
 BOOL save_map();
 BOOL make_map();
 void get_file();
+void set_fname(int,int);

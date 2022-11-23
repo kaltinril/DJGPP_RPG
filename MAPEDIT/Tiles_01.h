@@ -17,31 +17,13 @@ int count_n=0;
 unsigned char screen_1[4][9600];
 //screens_1 screen_1[4];
 //screen_1[0].tile=(unsigned char *)malloc(240)
-int array_count[2][240];
-//unsigned char tile_type[2][240];
-//fwordcpy same as fmemcpy  i think at least
-
-
-/*void fwordcpy(void far *destination, void far *source,int num_words)
-{
-// this function is similar to fmemcpy except that is moves data in words
-// it is about 25% faster than memcpy which uses bytes
-
-_asm	{
-	push ds              // need to save segment registers i.e. ds
-	les di,destination   // point es:di to destination of memory move
-	lds si,source        // point ds:si to source of memory move
-	mov cx,num_words     // move into cx the number of words to be moved
-	rep movsw            // let the processor do the memory move
-	pop ds               // restore the ds segment register
-
-	} // end inline asm
-
-} // end fwordcpy */
-
+int array_count[5][240];
 /***************************************************************************
  *  Draw_tile                                                              *
  *       draws a tile from the tile buffer to the double buffer            *
+ *       And makes sure it will fit on the screen, if any edge of the      *
+ *       Tile if off the screen the function cuts that part off, and draws *
+ *          Only what you can see                                          *
  **************************************************************************/
 
 void draw_tile(int a,int sx,int sy,int flip,int st_x,int st_y)
@@ -63,7 +45,7 @@ void draw_tile(int a,int sx,int sy,int flip,int st_x,int st_y)
  if (trans[a]==0 && end_line==0)
  {
   v=double_buffer+(sy<<8)+(sy<<6)+sx;
-  c=tile+(start_y+(st_y<<8))+(start_y+(st_y<<6))+start_x;
+  c=tile+((start_y+st_y)<<8)+((start_y+st_y)<<6)+start_x;
   //if (st_x>0 || st_x<0){memcpy(screen,double_buffer,64000);cout<<st_x;getch();}
 
   for (y=0;y<sl_y;++y)
@@ -184,8 +166,9 @@ long ns=((ch_y-4)*100)+ch_x;
 	if (x<0){s_x=16+x;x=0;}
 	if (c_x>0 && x==c_x && n==0 && blah==0){s_x=x;x=0;n=-1;}
 	if (array_count[1][array[ns+n]]>array_count[0][array[ns+n]]){array_count[1][array[ns+n]]=0;}
-	if (array[ns+n]+array_count[1][array[ns+n]]-20)
-	{draw_tile(array[ns+n]+array_count[1][array[ns+n]],x,y,0,s_x,s_y);}
+	if ((array[ns+n]+array_count[1][array[ns+n]]-20)!=0)
+	{
+        draw_tile(array[ns+n]+array_count[1][array[ns+n]],x,y,0,s_x,s_y);}
 	if (s_x==0){x=x+16;}
 	else
 	{
@@ -207,31 +190,44 @@ long ns=((ch_y-4)*100)+ch_x;
 
 
 /***************************************************************************
- *  check_tile                                                             *
- *       checks to see if the tile that the character is moving to is      *
- *       a tile the character can move onto                                *
+ *  c_new_spot                                                             *
+ *       Checks to see if the tile that you are about to move on is a      *
+ *       Walkable tile, make sure it isn't a wall.                         *
+ *       If num returns 4 then there is no wall, if num returns any other  *
+ *         Number it has found 1 or more walls on that spot in one of the  *
+ *         Four frames.                                                    *
  **************************************************************************/
-void check_tile(int dir,unsigned char *array)
+int c_new_spot()
 {
- int ch_ny=(ch_y-4)+6,ch_nx=(ch_x)+10,ary=0;
+ int ch_ny=(ch_y-4)+ch_zy,ch_nx=(ch_x)+ch_zx,ary=0;
+ ch_ny=ch_ny+y_dir;
+ ch_nx=ch_nx+x_dir;
  ch_ny=(ch_ny*100);
  ary=ch_ny+ch_nx;
-
- if (walkn[array[ary]]==1)
+ int num=0,i=0;
+  for (i=0;i<4;++i)
   {
-	if (dir==8){ch_y=ch_y+1;}
-	if (dir==5){ch_y=ch_y-1;}
-	if (dir==4){ch_x=ch_x+1;}
-	if (dir==6){ch_x=ch_x-1;}
+   if (walkn[screen_1[i][ary]]==0)
+   ++num;
   }
+return(num);
 }
+
+/***************************************************************************
+ *  check_action                                                           *
+ *       Checks the tile that you are on or a tile of your specification   *
+ *       To see if the tile has a certain actrg value which can mean       *
+ *       That there is an item at that spot, or a warp, or a door etc..    *
+ **************************************************************************/
 
 void check_action(long ary_2)
 {
- int ch_ny=(ch_y-4)+6,ch_nx=(ch_x)+10,ary=0,frm=0,n=0;
+ int ch_ny=(ch_y-4)+ch_zy,ch_nx=(ch_x)+ch_zx,ary=0,frm=0,n=0;
  ch_ny=(ch_ny*100);
  ary=ch_ny+ch_nx;
  if (ary_2!=0){ary=ary_2;}
+ if (action_ab==13)
+ {
  for (frm=0;frm<4;++frm)
  {
   if (actrg[screen_1[frm][ary]]==4)
@@ -308,7 +304,7 @@ void check_action(long ary_2)
            map_now[0]=item_name[n];
            map_now[1]=item_tmp2[n];
            cout<<"\n";
-                      cout<<map_now[0]<<"mapnew"<<map_now[1];
+                      cout<<map_now[0]<<"mapnew"<<map_now[1]<<"\n";
                       getch();
            }
 	  ch_x=item_temp[n]%100;
@@ -324,5 +320,5 @@ void check_action(long ary_2)
 
   }
  }
-
+}
 }

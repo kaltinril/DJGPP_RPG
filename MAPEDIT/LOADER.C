@@ -5,7 +5,7 @@ BOOL open_map()
   {
   char temp_char[13];
   unsigned char checkin[5];
-
+  int n=0;
   //open map file
   int grip=open(RfName,O_RDONLY|O_BINARY);
   if(grip<0)
@@ -26,7 +26,8 @@ BOOL open_map()
     close(grip);
     return (-1);
     }
-
+  read(grip,map_ver,1);
+  if (map_ver>this_ver){Clear(0,screen);gotoxy(1,1);cout<<"Map is a newer version then this program can read.\nPlease download a newer version from\n http://members.xoom.com/rack/\n";return(-1);}
   read(grip,screen_1[0],9600);
   read(grip,screen_1[1],9600);
   read(grip,screen_1[2],9600);
@@ -44,7 +45,15 @@ BOOL open_map()
   read(grip,walkn,240);
   read(grip,trans,240);
   read(grip,actrg,240);
-  read(grip,array_count[0],240);
+  if (map_ver>0){read(grip,array_count[0],240);}
+  if (map_ver==1)
+  {
+   for (n=0;n<240;++n)
+   {
+    if (array_count[0][n]!=0){array_count[2][n]=-1;array_count[3][n]=1;}
+   }
+  }
+  if (map_ver>1){read(grip,array_count[2],240);read(grip,array_count[3],240);}
   read(grip,checkin,4);
   if(!strncmp((char *)checkin,"ITEM",4))
     {
@@ -73,6 +82,7 @@ BOOL save_map()
 
   write(grip,"RACK",4);
   write(grip,"MYMP",4);
+  write(grip,this_ver,1);
   write(grip,screen_1[0],9600);
   write(grip,screen_1[1],9600);
   write(grip,screen_1[2],9600);
@@ -91,6 +101,8 @@ BOOL save_map()
   write(grip,trans,240);
   write(grip,actrg,240);
   write(grip,array_count[0],240);
+  write(grip,array_count[2],240);
+  write(grip,array_count[3],240);
   write(grip,"ITEM",4);
   write(grip,&item_tot,sizeof(short));
   int i=0;
@@ -115,6 +127,7 @@ BOOL make_map()
 
   write(grip,"RACK",4);
   write(grip,"MYMP",4);
+  write(grip,this_ver,1);
   write(grip,screen_1[0],9600);
   write(grip,screen_1[1],9600);
   write(grip,screen_1[2],9600);
@@ -133,6 +146,8 @@ BOOL make_map()
   write(grip,trans,240);
   write(grip,actrg,240);
   write(grip,array_count[0],240);
+  write(grip,array_count[2],240);
+  write(grip,array_count[3],240);
   write(grip,"ITEM",4);
   write(grip,&item_tot,sizeof(short));
   int i=0;
@@ -142,7 +157,6 @@ BOOL make_map()
    write(grip,&item_name[i],sizeof(char));
    write(grip,&item_temp[i],sizeof(short));
    write(grip,&item_tmp2[i],sizeof(short));
-   write(grip,&item_trig[i],sizeof(short));
   }
  close(grip);
 }
